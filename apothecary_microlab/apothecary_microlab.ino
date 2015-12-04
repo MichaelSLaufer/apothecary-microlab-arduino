@@ -6,11 +6,14 @@ char cmd;
 String serial_out = "";
 char str_buffer_float[5];
 
-// assign pins
-//int pin_in_lipoly_charging = A6; // digital pin 4, battery charging indicator
-//int pin_in_lipoly_complete = A7; // digital pin 6, battery charge complete indicator
-int pin_out_phone_charge = 11; // digital toggle for enabling/disabling charging of the cell phone
-int pin_state_phone_charge = 0; // saves last known state of phone charge pin
+int pin_out_relay_a = 12; // digital toggle for enabling/disabling charging of the cell phone
+int pin_state_relay_a = 0; // saves last known state of phone charge pin
+
+int pin_out_relay_b = 10; // digital toggle for enabling/disabling charging of the cell phone
+int pin_state_relay_b = 0; // saves last known state of phone charge pin
+
+int pin_out_relay_c = 11; // digital toggle for enabling/disabling charging of the cell phone
+int pin_state_relay_c = 0; // saves last known state of phone charge pin
 
 // initialize temp/humidity (environment) sensor
 #define DHTPIN 2
@@ -22,14 +25,14 @@ void setup () {
   dht.begin();
 
   // initialize output pins
-  pinMode(pin_out_phone_charge, OUTPUT);
-  digitalWrite(pin_out_phone_charge, LOW);
+  pinMode(pin_out_relay_a, OUTPUT);
+  digitalWrite(pin_out_relay_a, LOW);
+  pinMode(pin_out_relay_b, OUTPUT);
+  digitalWrite(pin_out_relay_b, LOW);
+  pinMode(pin_out_relay_c, OUTPUT);
+  digitalWrite(pin_out_relay_c, LOW);
   
-  // initialize input pins
-//  pinMode(pin_in_lipoly_charging, INPUT);
-//  pinMode(pin_in_lipoly_complete, INPUT);
-  
-  test_phone_charge();
+  test_relays();
 }
 
 void loop () {
@@ -41,32 +44,35 @@ void loop () {
   while (Serial.available()) {
     cmd = Serial.read();
     
-    if (cmd == 'a') {
-//      // GET -> battery charging status: charging/complete (0/1)
-//      String value_lipoly_charging = (String) digitalRead(pin_in_lipoly_charging);
-//      String value_lipoly_complete = (String) digitalRead(pin_in_lipoly_complete);
-//      serial_out += value_lipoly_charging + "/" + value_lipoly_complete;
-//    
-//    } else if (cmd == 'b') {
-      // GET -> internal environment: (degrees/humidity)
+    if (cmd == 't') {
       String value_humidity = (String) dtostrf(dht.readHumidity(), 0, 2, str_buffer_float);
       String value_temperature = (String) dtostrf(dht.readTemperature(), 0, 2, str_buffer_float);
       serial_out += value_humidity + "/" + value_temperature;
       
-    } else if (cmd == 's') {
-      // SET -> USB power -> ON
-      serial_out += (String) pin_state_phone_charge + "/" + (String) set_phone_charge(true);
+    } else if (cmd == 'A') {
+      serial_out += (String) pin_state_relay_a + "/" + (String) set_relay_a(true);
       
-    } else if (cmd == 't') {
-      // SET -> USB power -> OFF
-      serial_out += (String) pin_state_phone_charge + "/" + (String) set_phone_charge(false);
+    } else if (cmd == 'a') {
+      serial_out += (String) pin_state_relay_a + "/" + (String) set_relay_a(false);
+           
+    } else if (cmd == 'B') {
+      serial_out += (String) pin_state_relay_b + "/" + (String) set_relay_b(true);
       
-   }
+    } else if (cmd == 'b') {
+      serial_out += (String) pin_state_relay_b + "/" + (String) set_relay_b(false);
+      
+    } else if (cmd == 'C') {
+      serial_out += (String) pin_state_relay_c + "/" + (String) set_relay_c(true);
+      
+    } else if (cmd == 'c') {
+      serial_out += (String) pin_state_relay_c + "/" + (String) set_relay_c(false);
+      
+    }    
+  
     
     if (serial_out != "") {
-      Serial.print("_");
+      Serial.print("\n");
       Serial.print(serial_out);
-      Serial.print("^" + (String) cmd + "*");
       serial_out = "";
     }
   
@@ -74,19 +80,46 @@ void loop () {
   
 }
 
-void test_phone_charge() {
-  set_phone_charge(true);
+void test_relays() {
+  set_relay_a(true);
+  set_relay_b(true);
+  set_relay_c(true);
   delay(1000);
-  set_phone_charge(false);
+  set_relay_a(false);
+  set_relay_b(false);
+  set_relay_c(false);
 }
 
-int set_phone_charge(boolean on_off) {
+
+int set_relay_a(boolean on_off) {
   if (on_off) {
-    digitalWrite(pin_out_phone_charge, HIGH);
-    pin_state_phone_charge = 1;
+    digitalWrite(pin_out_relay_a, HIGH);
+    pin_state_relay_a = 1;
   } else {
-    digitalWrite(pin_out_phone_charge, LOW);
-    pin_state_phone_charge = 0;
+    digitalWrite(pin_out_relay_a, LOW);
+    pin_state_relay_a = 0;
   }
-  return pin_state_phone_charge;
+  return pin_state_relay_a;
+}
+
+int set_relay_b(boolean on_off) {
+  if (on_off) {
+    digitalWrite(pin_out_relay_b, HIGH);
+    pin_state_relay_b = 1;
+  } else {
+    digitalWrite(pin_out_relay_b, LOW);
+    pin_state_relay_b = 0;
+  }
+  return pin_state_relay_b;
+}
+
+int set_relay_c(boolean on_off) {
+  if (on_off) {
+    digitalWrite(pin_out_relay_c, HIGH);
+    pin_state_relay_c = 1;
+  } else {
+    digitalWrite(pin_out_relay_c, LOW);
+    pin_state_relay_c = 0;
+  }
+  return pin_state_relay_c;
 }
